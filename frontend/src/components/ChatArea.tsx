@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 import { api, Source } from '@/lib/api';
 
@@ -91,6 +92,7 @@ export default function ChatArea({ notebookId, onCitationClick }: ChatAreaProps)
       }
     } catch (error) {
       console.error('Chat error:', error);
+      toast.error('Failed to communicate with AI');
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1].content = 'Sorry, an error occurred while processing your request.';

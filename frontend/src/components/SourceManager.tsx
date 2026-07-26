@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { api, Source } from '@/lib/api';
 import AddSourceModal from './AddSourceModal';
 
@@ -85,7 +86,9 @@ export default function SourceManager({ notebookId }: SourceManagerProps) {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        api.sources.reindex(notebookId, source.id).then(fetchSources).catch(console.error);
+                        api.sources.reindex(notebookId, source.id)
+                          .then(() => { toast.success('Re-indexing started'); fetchSources(); })
+                          .catch(() => toast.error('Failed to re-index source'));
                       }}
                       className="text-gray-400 hover:text-blue-500" title="Re-index"
                     >
@@ -95,7 +98,9 @@ export default function SourceManager({ notebookId }: SourceManagerProps) {
                       onClick={(e) => {
                         e.stopPropagation();
                         if(confirm('Delete source?')) {
-                          api.sources.remove(notebookId, source.id).then(fetchSources).catch(console.error);
+                          api.sources.remove(notebookId, source.id)
+                            .then(() => { toast.success('Source deleted'); fetchSources(); })
+                            .catch(() => toast.error('Failed to delete source'));
                         }
                       }}
                       className="text-gray-400 hover:text-red-500" title="Remove"

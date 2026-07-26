@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { api } from '@/lib/api';
 
 interface AddSourceModalProps {
@@ -42,8 +43,9 @@ export default function AddSourceModal({ notebookId, isOpen, onClose, onAdded }:
       onClose();
       setFile(null);
       setUrl('');
+      toast.success('Source added successfully');
     } catch (err: any) {
-      setError(err.message || 'Failed to add source');
+      toast.error(err.message || 'Failed to add source');
     } finally {
       setIsSubmitting(false);
     }

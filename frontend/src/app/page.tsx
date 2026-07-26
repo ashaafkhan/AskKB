@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { Toaster, toast } from 'react-hot-toast';
 import { api, Notebook } from '@/lib/api';
 import NotebookList from '@/components/NotebookList';
 import SourceManager from '@/components/SourceManager';
@@ -12,13 +13,15 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
 
   useEffect(() => {
     fetchNotebooks();
   }, []);
 
   useEffect(() => {
-    setActiveSourceId(null); // Reset when notebook changes
+    setActiveSourceId(null);
+    setSidebarOpen(false); // Close sidebar on mobile when changing notebook
   }, [activeNotebookId]);
 
   const fetchNotebooks = async () => {
@@ -29,7 +32,7 @@ export default function Home() {
         setActiveNotebookId(data[0].id);
       }
     } catch (err) {
-      console.error(err);
+      toast.error('Failed to load notebooks');
     } finally {
       setLoading(false);
     }
@@ -40,9 +43,9 @@ export default function Home() {
       const newNb = await api.notebooks.create(name);
       setNotebooks([newNb, ...notebooks]);
       setActiveNotebookId(newNb.id);
+      toast.success('Notebook created');
     } catch (err) {
-      console.error(err);
-      alert('Error creating notebook');
+      toast.error('Error creating notebook');
     }
   };
 
@@ -50,9 +53,9 @@ export default function Home() {
     try {
       await api.notebooks.update(id, name);
       setNotebooks(notebooks.map(nb => nb.id === id ? { ...nb, name } : nb));
+      toast.success('Notebook updated');
     } catch (err) {
-      console.error(err);
-      alert('Error updating notebook');
+      toast.error('Error updating notebook');
     }
   };
 
@@ -64,18 +67,31 @@ export default function Home() {
       if (activeNotebookId === id) {
         setActiveNotebookId(notebooks[0]?.id || null);
       }
+      toast.success('Notebook deleted');
     } catch (err) {
-      console.error(err);
-      alert('Error deleting notebook');
+      toast.error('Error deleting notebook');
     }
   };
 
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-gray-50 text-gray-900 font-sans">
-      {/* Left Rail */}
-      <aside className="w-64 border-r border-gray-200 bg-white flex flex-col h-full flex-shrink-0">
-        <div className="p-4 border-b border-gray-200">
+      <Toaster position="top-right" />
+      
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Left Rail (Notebooks & Sources) */}
+      <aside className={`fixed md:relative z-50 w-64 border-r border-gray-200 bg-white flex flex-col h-full flex-shrink-0 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800 tracking-tight">AskKB</h1>
+          <button className="md:hidden text-gray-500 hover:text-gray-700" onClick={() => setSidebarOpen(false)}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
         </div>
         
         <NotebookList 
@@ -88,22 +104,32 @@ export default function Home() {
           onDelete={handleDeleteNotebook}
         />
         
-        {/* Source Manager Area */}
         <SourceManager notebookId={activeNotebookId} />
       </aside>
 
       {/* Center - Chat */}
-      <main className="flex-1 flex flex-col min-w-0 bg-white relative">
-        <ChatArea notebookId={activeNotebookId} onCitationClick={(id) => setActiveSourceId(id)} />
-      </main>
+      <section className="flex-1 flex flex-col min-w-0 bg-white relative h-full">
+        <div className="md:hidden flex items-center p-3 border-b border-gray-200 bg-white">
+          <button onClick={() => setSidebarOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          <span className="ml-3 font-medium text-gray-800">AskKB Chat</span>
+        </div>
+        
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          <ChatArea notebookId={activeNotebookId} onCitationClick={(id) => setActiveSourceId(id)} />
+        </div>
+      </section>
 
-      {/* Right - Source Viewer */}
-      <aside className="w-80 border-l border-gray-200 bg-white flex flex-col h-full flex-shrink-0 transition-all duration-300">
-        <SourceViewer 
-          notebookId={activeNotebookId} 
-          sourceId={activeSourceId} 
-          onClose={() => setActiveSourceId(null)}
-        />
+      {/* Right - Source Viewer (Collapsible) */}
+      <aside className={`${activeSourceId ? 'w-full md:w-80 border-l border-gray-200' : 'w-0 border-l-0'} absolute md:relative right-0 bg-white flex flex-col h-full flex-shrink-0 transition-all duration-300 overflow-hidden z-30 shadow-2xl md:shadow-none`}>
+        {activeSourceId && (
+          <SourceViewer 
+            notebookId={activeNotebookId} 
+            sourceId={activeSourceId} 
+            onClose={() => setActiveSourceId(null)}
+          />
+        )}
       </aside>
     </main>
   );
