@@ -91,4 +91,23 @@ export const api = {
       if (!res.ok) throw new Error('Failed to delete notebook');
     },
   },
+  bonus: {
+    generateRoadmap: async (notebookId: string): Promise<string> => {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/bonus/roadmap`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to generate roadmap');
+      }
+      const data = await res.json();
+      return data.roadmap;
+    },
+    generatePodcast: async (notebookId: string): Promise<{script: string, audioBase64: string | null}> => {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/bonus/podcast`, { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to generate podcast');
+      }
+      return res.json();
+    }
+  }
 };

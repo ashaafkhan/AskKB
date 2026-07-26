@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import notebookRoutes from './api/notebooks';
 import sourceRoutes from './api/sources';
 import chatRoutes from './api/chat';
+import bonusRoutes from './api/bonus';
 
 dotenv.config({ path: '../.env' }); // Load from root
 
@@ -22,6 +23,7 @@ import { initVectorStore } from './vectorstore/qdrant';
 app.use('/notebooks', notebookRoutes);
 app.use('/notebooks/:notebookId/sources', sourceRoutes);
 app.use('/notebooks/:notebookId/chat', chatRoutes);
+app.use('/notebooks/:notebookId/bonus', bonusRoutes);
 
 app.listen(port, async () => {
   await initVectorStore();

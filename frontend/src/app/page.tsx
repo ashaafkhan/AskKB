@@ -7,12 +7,14 @@ import NotebookList from '@/components/NotebookList';
 import SourceManager from '@/components/SourceManager';
 import ChatArea from '@/components/ChatArea';
 import SourceViewer from '@/components/SourceViewer';
+import BonusPanel from '@/components/BonusPanel';
 
 export default function Home() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
+  const [isBonusPanelOpen, setIsBonusPanelOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
 
   useEffect(() => {
@@ -21,6 +23,7 @@ export default function Home() {
 
   useEffect(() => {
     setActiveSourceId(null);
+    setIsBonusPanelOpen(false);
     setSidebarOpen(false); // Close sidebar on mobile when changing notebook
   }, [activeNotebookId]);
 
@@ -104,7 +107,26 @@ export default function Home() {
           onDelete={handleDeleteNotebook}
         />
         
-        <SourceManager notebookId={activeNotebookId} />
+        <div className="flex-1 overflow-y-auto">
+          <SourceManager notebookId={activeNotebookId} />
+        </div>
+
+        {/* Bonus Panel Toggle */}
+        {activeNotebookId && (
+          <div className="p-4 border-t border-gray-200 bg-blue-50/50">
+            <button
+              onClick={() => {
+                setActiveSourceId(null);
+                setIsBonusPanelOpen(true);
+                if (window.innerWidth < 768) setSidebarOpen(false);
+              }}
+              className="w-full py-2 px-3 bg-white border border-blue-200 text-blue-700 text-sm font-medium rounded-md shadow-sm hover:bg-blue-50 transition-colors flex items-center justify-center space-x-2"
+            >
+              <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              <span>Bonus Features</span>
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Center - Chat */}
@@ -117,17 +139,29 @@ export default function Home() {
         </div>
         
         <div className="flex-1 flex flex-col overflow-hidden relative">
-          <ChatArea notebookId={activeNotebookId} onCitationClick={(id) => setActiveSourceId(id)} />
+          <ChatArea 
+            notebookId={activeNotebookId} 
+            onCitationClick={(id) => {
+              setIsBonusPanelOpen(false);
+              setActiveSourceId(id);
+            }} 
+          />
         </div>
       </section>
 
-      {/* Right - Source Viewer (Collapsible) */}
-      <aside className={`${activeSourceId ? 'w-full md:w-80 border-l border-gray-200' : 'w-0 border-l-0'} absolute md:relative right-0 bg-white flex flex-col h-full flex-shrink-0 transition-all duration-300 overflow-hidden z-30 shadow-2xl md:shadow-none`}>
+      {/* Right - Source Viewer or Bonus Panel (Collapsible) */}
+      <aside className={`${(activeSourceId || isBonusPanelOpen) ? 'w-full md:w-[350px] border-l border-gray-200' : 'w-0 border-l-0'} absolute md:relative right-0 bg-white flex flex-col h-full flex-shrink-0 transition-all duration-300 overflow-hidden z-30 shadow-2xl md:shadow-none`}>
         {activeSourceId && (
           <SourceViewer 
             notebookId={activeNotebookId} 
             sourceId={activeSourceId} 
             onClose={() => setActiveSourceId(null)}
+          />
+        )}
+        {!activeSourceId && isBonusPanelOpen && (
+          <BonusPanel 
+            notebookId={activeNotebookId}
+            onClose={() => setIsBonusPanelOpen(false)}
           />
         )}
       </aside>
