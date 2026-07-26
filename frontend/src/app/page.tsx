@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api, Notebook } from '@/lib/api';
 import NotebookList from '@/components/NotebookList';
 import SourceManager from '@/components/SourceManager';
+import ChatArea from '@/components/ChatArea';
 
 export default function Home() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
@@ -88,18 +89,9 @@ export default function Home() {
       </aside>
 
       {/* Center - Chat */}
-      <section className="flex-1 flex flex-col bg-gray-50 relative">
-        {activeNotebook ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500">
-            <p className="text-lg">Chat UI will be built in Stage 6.</p>
-            <p className="text-sm">Currently viewing: <span className="font-semibold text-gray-700">{activeNotebook.name}</span></p>
-          </div>
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
-            {loading ? 'Loading...' : 'Create your first notebook to get started.'}
-          </div>
-        )}
-      </section>
+      <main className="flex-1 flex flex-col min-w-0 bg-white relative">
+        <ChatArea notebookId={activeNotebookId} />
+      </main>
 
       {/* Right - Source Viewer (Placeholder) */}
       <aside className="w-80 border-l border-gray-200 bg-white flex flex-col h-full flex-shrink-0">
