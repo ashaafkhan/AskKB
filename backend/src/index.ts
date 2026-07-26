@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import notebookRoutes from './api/notebooks';
+import sourceRoutes from './api/sources';
+import chatRoutes from './api/chat';
 
 dotenv.config({ path: '../.env' }); // Load from root
 
@@ -15,12 +17,11 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-import sourceRoutes from './api/sources';
-
 import { initVectorStore } from './vectorstore/qdrant';
 
 app.use('/notebooks', notebookRoutes);
 app.use('/notebooks/:notebookId/sources', sourceRoutes);
+app.use('/notebooks/:notebookId/chat', chatRoutes);
 
 app.listen(port, async () => {
   await initVectorStore();

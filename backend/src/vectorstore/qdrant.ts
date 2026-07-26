@@ -49,3 +49,21 @@ export async function deleteSourceVectors(sourceId: string) {
     }
   });
 }
+
+export async function queryVectors(vector: number[], notebookId: string, limit: number = 5) {
+  const result = await client.search(COLLECTION_NAME, {
+    vector,
+    limit,
+    filter: {
+      must: [
+        {
+          key: 'notebook_id',
+          match: { value: notebookId }
+        }
+      ]
+    },
+    with_payload: true,
+  });
+
+  return result;
+}
