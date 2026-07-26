@@ -5,15 +5,21 @@ import { api, Notebook } from '@/lib/api';
 import NotebookList from '@/components/NotebookList';
 import SourceManager from '@/components/SourceManager';
 import ChatArea from '@/components/ChatArea';
+import SourceViewer from '@/components/SourceViewer';
 
 export default function Home() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNotebookId, setActiveNotebookId] = useState<string | null>(null);
+  const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchNotebooks();
   }, []);
+
+  useEffect(() => {
+    setActiveSourceId(null); // Reset when notebook changes
+  }, [activeNotebookId]);
 
   const fetchNotebooks = async () => {
     try {
@@ -64,8 +70,6 @@ export default function Home() {
     }
   };
 
-  const activeNotebook = notebooks.find(nb => nb.id === activeNotebookId);
-
   return (
     <main className="flex h-screen w-screen overflow-hidden bg-gray-50 text-gray-900 font-sans">
       {/* Left Rail */}
@@ -90,17 +94,16 @@ export default function Home() {
 
       {/* Center - Chat */}
       <main className="flex-1 flex flex-col min-w-0 bg-white relative">
-        <ChatArea notebookId={activeNotebookId} />
+        <ChatArea notebookId={activeNotebookId} onCitationClick={(id) => setActiveSourceId(id)} />
       </main>
 
-      {/* Right - Source Viewer (Placeholder) */}
-      <aside className="w-80 border-l border-gray-200 bg-white flex flex-col h-full flex-shrink-0">
-        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="font-semibold text-gray-700">Source Viewer</h2>
-        </div>
-        <div className="flex-1 p-4 text-sm text-gray-500 text-center flex items-center justify-center">
-          Source Viewer panel (Stage 7)
-        </div>
+      {/* Right - Source Viewer */}
+      <aside className="w-80 border-l border-gray-200 bg-white flex flex-col h-full flex-shrink-0 transition-all duration-300">
+        <SourceViewer 
+          notebookId={activeNotebookId} 
+          sourceId={activeSourceId} 
+          onClose={() => setActiveSourceId(null)}
+        />
       </aside>
     </main>
   );

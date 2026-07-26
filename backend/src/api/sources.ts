@@ -110,6 +110,29 @@ router.post('/:id/reindex', async (req, res) => {
   }
 });
 
+router.get('/:id/content', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const source = await db.source.findUnique({ where: { id } });
+    if (!source) return res.status(404).json({ error: 'Source not found' });
+
+    const chunks = await db.chunk.findMany({
+      where: { sourceId: id },
+      orderBy: { orderIndex: 'asc' }
+    });
+
+    const fullText = chunks.map(c => c.content).join('\n\n');
+
+    res.json({
+      source,
+      content: fullText
+    });
+  } catch (error) {
+    console.error('Error fetching source content:', error);
+    res.status(500).json({ error: 'Failed to fetch source content' });
+  }
+});
+
 async function processExtraction(sourceId: string, type: string, ref: string) {
   try {
     await db.source.update({ where: { id: sourceId }, data: { status: 'extracting' } });

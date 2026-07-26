@@ -53,6 +53,11 @@ export const api = {
         method: 'POST',
       });
       if (!res.ok) throw new Error('Failed to re-index source');
+    },
+    getContent: async (notebookId: string, sourceId: string): Promise<{source: Source, content: string}> => {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/sources/${sourceId}/content`);
+      if (!res.ok) throw new Error('Failed to fetch source content');
+      return res.json();
     }
   },
   notebooks: {

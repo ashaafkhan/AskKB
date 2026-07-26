@@ -9,9 +9,10 @@ interface Message {
 
 interface ChatAreaProps {
   notebookId: string | null;
+  onCitationClick?: (sourceId: string) => void;
 }
 
-export default function ChatArea({ notebookId }: ChatAreaProps) {
+export default function ChatArea({ notebookId, onCitationClick }: ChatAreaProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -102,10 +103,26 @@ export default function ChatArea({ notebookId }: ChatAreaProps) {
 
   // Helper to render citations
   const renderCitations = (content: string) => {
-    // We will just use ReactMarkdown for now, which can handle standard markdown links.
-    // If we want custom citation pills like [Document 1], we can parse them before passing to ReactMarkdown.
-    // Let's replace [Document 1 | Source ID: xyz] with a nicely formatted pill if it's there.
-    return content; 
+    // We will parse `[Document X | Source ID: xyz]` or similar and turn it into a clickable component
+    const parts = content.split(/(\[Document \d+ \| Source ID: [a-zA-Z0-9-]+\])/g);
+    
+    return parts.map((part, i) => {
+      const match = part.match(/\[Document (\d+) \| Source ID: ([a-zA-Z0-9-]+)\]/);
+      if (match) {
+        const docNum = match[1];
+        const sourceId = match[2];
+        return (
+          <button 
+            key={i} 
+            onClick={() => onCitationClick && onCitationClick(sourceId)}
+            className="inline-flex items-center mx-1 px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+          >
+            Doc {docNum}
+          </button>
+        );
+      }
+      return <span key={i}><ReactMarkdown>{part}</ReactMarkdown></span>;
+    });
   };
 
   if (!notebookId) {
@@ -132,7 +149,7 @@ export default function ChatArea({ notebookId }: ChatAreaProps) {
                   <p className="whitespace-pre-wrap text-[15px]">{msg.content}</p>
                 ) : (
                   <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown>{renderCitations(msg.content)}</ReactMarkdown>
+                    {renderCitations(msg.content)}
                   </div>
                 )}
               </div>
