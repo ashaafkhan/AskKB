@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Notebook {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sources   Source[]
+}
+
+model Source {
+  id            String   @id @default(uuid())
+  notebookId    String
+  notebook      Notebook @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  type          String
+  title         String
+  originalRef   String
+  status        String
+  errorMessage  String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Chunk {
+  id               String   @id @default(uuid())
+  sourceId         String
+  notebookId       String
+  content          String
+  orderIndex       Int
+  locationMetadata Json?
+  embeddingId      String?
+  createdAt        DateTime @default(now())
+}
+
+model ChatMessage {
+  id         String   @id @default(uuid())
+  notebookId String
+  role       String
+  content    String
+  citations  Json?
+  createdAt  DateTime @default(now())
+}
