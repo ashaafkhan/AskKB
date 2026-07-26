@@ -73,6 +73,43 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    // Clean up vectors from Qdrant
+    await deleteSourceVectors(id);
+    
+    // Deleting the source will cascade delete the chunks in the relational DB (Prisma schema)
+    // Wait, let's explicitly delete chunks if cascade isn't set
+    await db.chunk.deleteMany({ where: { sourceId: id } });
+    await db.source.delete({ where: { id } });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Error deleting source:', error);
+    res.status(500).json({ error: 'Failed to delete source' });
+  }
+});
+
+router.post('/:id/reindex', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const source = await db.source.findUnique({ where: { id } });
+    if (!source) return res.status(404).json({ error: 'Source not found' });
+    
+    // Status update
+    await db.source.update({ where: { id }, data: { status: 'uploading' } });
+    res.status(202).json({ message: 'Re-indexing started' });
+
+    // Background processing
+    processExtraction(id, source.type, source.originalRef).catch(console.error);
+
+  } catch (error) {
+    console.error('Error re-indexing source:', error);
+    res.status(500).json({ error: 'Failed to re-index source' });
+  }
+});
+
 async function processExtraction(sourceId: string, type: string, ref: string) {
   try {
     await db.source.update({ where: { id: sourceId }, data: { status: 'extracting' } });

@@ -41,6 +41,18 @@ export const api = {
       });
       if (!res.ok) throw new Error('Failed to add source');
       return res.json();
+    },
+    remove: async (notebookId: string, sourceId: string): Promise<void> => {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/sources/${sourceId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Failed to delete source');
+    },
+    reindex: async (notebookId: string, sourceId: string): Promise<void> => {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/sources/${sourceId}/reindex`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Failed to re-index source');
     }
   },
   notebooks: {
