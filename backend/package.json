@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon src/index.ts",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -29,13 +31,18 @@
     "@prisma/config": "^7.9.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/jsdom": "^28.0.3",
     "@types/multer": "^2.2.0",
     "@types/node": "^26.1.1",
     "@types/pdf-parse": "^1.1.5",
+    "@types/supertest": "^7.2.1",
     "@types/uuid": "^10.0.0",
+    "jest": "^30.4.2",
     "nodemon": "^3.1.14",
     "prisma": "^7.9.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
     "typescript": "^7.0.2"
   }
