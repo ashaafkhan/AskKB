@@ -6,6 +6,9 @@ import { extractText } from '../ingestion/extractors/text';
 import { extractWeb } from '../ingestion/extractors/web';
 import { extractYouTube } from '../ingestion/extractors/youtube';
 import { extractVTT } from '../ingestion/extractors/vtt';
+import { chunkBlocks } from '../ingestion/chunker';
+import { embedTexts } from '../rag/embedder';
+import { upsertVectors, deleteSourceVectors } from '../vectorstore/qdrant';
 
 const upload = multer({ dest: 'uploads/' }); // Temporary local storage
 const router = Router({ mergeParams: true }); // mergeParams to access :notebookId
@@ -96,17 +99,67 @@ async function processExtraction(sourceId: string, type: string, ref: string) {
         throw new Error(`Unsupported source type: ${type}`);
     }
 
-    // For Stage 2, we just successfully extract and save raw data to a JSON field (or pause).
-    // The PRD implies it moves to 'chunking' or 'ready'. 
-    // We will save to a temporary field or just set status to 'ready' (we will chunk in Stage 3).
-    // For now, let's store the blocks in a temporary field if possible, or just mark 'ready'.
-    // We'll set status to 'ready' (simulating end of pipeline for now) and save metadata.
+    // Stage 3: Chunking
+    await db.source.update({ where: { id: sourceId }, data: { status: 'chunking' } });
+    const chunks = chunkBlocks(extractedBlocks);
+
+    // Stage 3: Embedding
+    await db.source.update({ where: { id: sourceId }, data: { status: 'embedding' } });
+    
+    // Batch process embeddings if chunks array is very large, but for demo we just do one batch.
+    // Gemini has a limit on batch size, let's chunk the chunks array into batches of 100.
+    const BATCH_SIZE = 100;
+    const pointsToUpsert = [];
+    
+    const source = await db.source.findUnique({ where: { id: sourceId } });
+    const notebookId = source?.notebookId || '';
+
+    // First, clear old chunks if re-indexing (idempotency)
+    await deleteSourceVectors(sourceId);
+    await db.chunk.deleteMany({ where: { sourceId } });
+
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+      const textsToEmbed = batch.map(c => c.text);
+      
+      const embeddings = await embedTexts(textsToEmbed);
+      
+      // Save chunks to DB and construct Qdrant points
+      for (let j = 0; j < batch.length; j++) {
+        const chunk = batch[j];
+        const vector = embeddings[j];
+        
+        await db.chunk.create({
+          data: {
+            id: chunk.id,
+            sourceId,
+            notebookId,
+            content: chunk.text,
+            orderIndex: chunk.orderIndex,
+            locationMetadata: chunk.metadata,
+          }
+        });
+
+        pointsToUpsert.push({
+          id: chunk.id,
+          vector,
+          payload: {
+            source_id: sourceId,
+            notebook_id: notebookId,
+            text: chunk.text,
+            ...chunk.metadata
+          }
+        });
+      }
+    }
+
+    // Store embeddings in Vector DB
+    await upsertVectors(pointsToUpsert);
 
     await db.source.update({ 
       where: { id: sourceId }, 
       data: { 
         status: 'ready',
-        // In Stage 3 we will move this to Chunks and Vectors instead of dumping into metadata
       } 
     });
 

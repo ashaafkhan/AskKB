@@ -17,9 +17,12 @@ app.get('/health', (req, res) => {
 
 import sourceRoutes from './api/sources';
 
+import { initVectorStore } from './vectorstore/qdrant';
+
 app.use('/notebooks', notebookRoutes);
 app.use('/notebooks/:notebookId/sources', sourceRoutes);
 
-app.listen(port, () => {
+app.listen(port, async () => {
+  await initVectorStore();
   console.log(`Backend server running on http://localhost:${port}`);
 });

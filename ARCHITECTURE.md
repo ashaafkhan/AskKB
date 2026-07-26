@@ -7,7 +7,7 @@ This document records the foundational technology stack choices made for the Ask
 - **Vector DB**: Qdrant
 - **Metadata/Relational DB**: PostgreSQL
 - **LLM Provider (Chat)**: Groq (via raw API)
-- **Embedding Model**: TBD (Note: Groq currently does not provide embedding models natively. We will need a separate API like OpenAI/Voyage/Cohere, or a local embedding model via `transformers.js`).
+- **Embedding Model**: Google Gemini (`text-embedding-004`)
 - **Backend Framework**: Node.js (Express)
 - **Frontend Framework**: Next.js (React)
 - **File/Object Storage**: Cloudflare R2
