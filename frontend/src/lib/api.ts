@@ -1,14 +1,48 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
 
+export interface Source {
+  id: string;
+  notebookId: string;
+  type: 'pdf' | 'text' | 'web' | 'youtube' | 'vtt';
+  title: string;
+  status: 'uploading' | 'extracting' | 'chunking' | 'embedding' | 'ready' | 'failed';
+  errorMessage?: string;
+  createdAt: string;
+}
+
 export interface Notebook {
   id: string;
   name: string;
   createdAt: string;
   updatedAt: string;
-  sources: any[]; // define source type later
+  sources: Source[];
 }
 
 export const api = {
+  sources: {
+    list: async (notebookId: string): Promise<Source[]> => {
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/sources`);
+      if (!res.ok) throw new Error('Failed to fetch sources');
+      return res.json();
+    },
+    add: async (notebookId: string, type: string, fileOrUrl: File | string): Promise<Source> => {
+      const formData = new FormData();
+      formData.append('type', type);
+      
+      if (type === 'web' || type === 'youtube') {
+        formData.append('url', fileOrUrl as string);
+      } else {
+        formData.append('file', fileOrUrl as File);
+      }
+      
+      const res = await fetch(`${API_BASE_URL}/notebooks/${notebookId}/sources`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Failed to add source');
+      return res.json();
+    }
+  },
   notebooks: {
     list: async (): Promise<Notebook[]> => {
       const res = await fetch(`${API_BASE_URL}/notebooks`);

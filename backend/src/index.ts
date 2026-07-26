@@ -15,7 +15,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+import sourceRoutes from './api/sources';
+
 app.use('/notebooks', notebookRoutes);
+app.use('/notebooks/:notebookId/sources', sourceRoutes);
 
 app.listen(port, () => {
   console.log(`Backend server running on http://localhost:${port}`);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api, Notebook } from '@/lib/api';
 import NotebookList from '@/components/NotebookList';
+import SourceManager from '@/components/SourceManager';
 
 export default function Home() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
@@ -81,6 +82,9 @@ export default function Home() {
           onUpdate={handleUpdateNotebook}
           onDelete={handleDeleteNotebook}
         />
+        
+        {/* Source Manager Area */}
+        <SourceManager notebookId={activeNotebookId} />
       </aside>
 
       {/* Center - Chat */}
